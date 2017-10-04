@@ -15,5 +15,11 @@ server.get('/echo/:name', (req, res, next) => {
     return next();
 });
 
+server.get(/.*/, plugins.serveStatic({
+    'directory': 'public',
+    'default': 'index.html'
+}));
+
+
 const port = process.env.PORT || 8000;
 server.listen(port, () => console.log(`${server.name} listening at port ${port}`));

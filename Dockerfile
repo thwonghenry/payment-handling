@@ -6,10 +6,21 @@ RUN apk add --no-cache yarn
 # Heroku must use /app as the working directory
 WORKDIR app
 ENV HOME="/app"
-ENV NODE_ENV production
 
 COPY ./app .
 
+# Install dev dependency for building
+RUN yarn install
+
+# Build the bundle with webpack
+ENV NODE_ENV production
+RUN yarn run build
+
+# Clean up the files
+RUN rm -rf src/
+
+# Install only production packages
+RUN rm -rf node_modules/
 RUN yarn install
 
 # Use non-root user to run the server
