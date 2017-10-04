@@ -1,11 +1,9 @@
 version: '3'
 services:
-  web:
+  payment-service:
     build: .
     ports:
     - "8000:8000"
-    volumes:
-    - ./app:/app
     links:
     - redis
   redis:
