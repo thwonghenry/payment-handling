@@ -10,8 +10,8 @@ server.use(plugins.acceptParser(server.acceptable));
 server.use(plugins.queryParser());
 server.use(plugins.bodyParser());
 
-server.get('/echo/:name', (req, res, next) => {
-    res.send(req.params);
+server.post('/payment', (req, res, next) => {
+    res.send(req.body);
     return next();
 });
 
