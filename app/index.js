@@ -1,4 +1,6 @@
 const restify = require('restify');
+const paymentValidation = require('./server/handlers/paymentValidation');
+const gatewayChooser = require('./server/handlers/gatewayChooser');
 
 const server = restify.createServer({
     name: 'payment-service',
@@ -10,10 +12,7 @@ server.use(plugins.acceptParser(server.acceptable));
 server.use(plugins.queryParser());
 server.use(plugins.bodyParser());
 
-server.post('/payment', (req, res, next) => {
-    res.send(req.body);
-    return next();
-});
+server.post('/payment', paymentValidation, gatewayChooser);
 
 server.get(/.*/, plugins.serveStatic({
     'directory': 'public',

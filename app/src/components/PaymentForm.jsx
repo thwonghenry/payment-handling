@@ -1,5 +1,7 @@
 import React, { PureComponent } from 'react';
 import Payment from 'payment';
+import { processResponse } from '../utils/utils';
+import { validateForm, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
 
 class PaymentForm extends PureComponent {
     constructor() {
@@ -11,45 +13,24 @@ class PaymentForm extends PureComponent {
     onSubmit = (event) => {
         event.preventDefault();
         const data = {};
-        const errors = {};
-        let hasError = false;
-        Object.keys(this.inputRefs).forEach((key) => {
-            let error = '';
-            let value = (this.inputRefs[key].value || '').trim();
-            switch (key) {
-            case 'cardNumber':
-                if (!Payment.fns.validateCardNumber(value)) {
-                    error = 'Card Number is invalid!';
-                }
-                value = value.replace(/ /g, '');
-                break;
-            case 'cardExpiry':
-                if (!Payment.fns.validateCardExpiry(value)) {
-                    error = 'Card Expiry is invalid!';
-                }
-                value = Payment.fns.cardExpiryVal(value);
-                break;
-            case 'cardCvc':
-                if (!Payment.fns.validateCardCVC(value)) {
-                    error = 'Card CVC is invalid!';
-                }
-                break;
-            default:
-                if (value.trim() === '') {
-                    error = 'Cannot be empty!';
-                }
-            }
-            if (error) {
-                hasError = true;
-                errors[`${key}Error`] = error;
-            }
-            data[key] = value;
-        });
 
-        if (hasError) {
-            this.setState(errors);
+        // extract the data
+        for (let field in this.inputRefs) {
+            let value = (this.inputRefs[field].value || '').trim();
+            if (field === 'cardNumber') {
+                value = value.replace(/ /g, '');
+            } else if (field === 'cardExpiry') {
+                value = Payment.fns.cardExpiryVal(value);
+            }
+            data[field] = value;
+        }
+
+        const error = validateForm(data);
+        if (error !== true) {
+            this.setFieldError(error);
             return;
         }
+
         fetch('/payment', {
             method: 'POST',
             headers: {
@@ -57,15 +38,24 @@ class PaymentForm extends PureComponent {
             },
             body: JSON.stringify(data)
         })
-            .then((res) => res.json())
-            .then((data) => console.log('done', data));
+            .then(processResponse)
+            .then((data) => console.log('done', data))
+            .catch((error) => this.setFieldError(error));
     }
 
+    setFieldError(error) {
+        this.setState({
+            [`${error.field}Error`]: `${errorMessageBuilder(error)}`
+        });
+    }
+
+    // save the input fields refs
     getRef = (ref) => {
         const name = ref.getAttribute('name');
         this.inputRefs[name] = ref;
     }
 
+    // reset the associated input field error
     onChange = (event) => {
         const target = event.target;
         const name = target.getAttribute('name');
@@ -80,13 +70,14 @@ class PaymentForm extends PureComponent {
         Payment.formatCardCVC(this.inputRefs.cardCvc);
     }
 
-    renderFormGroup(name, placeholder) {
-        const error = this.state[`${name}Error`];
+    renderFormGroup(field) {
+        const error = this.state[`${field}Error`];
+        const name = fieldToName[field];
         return (
             <div className={ `form-group ${error ? 'has-error' : ''}` }>
-                <label className="control-label col-xs-12 col-sm-2" htmlFor={ name }>{ placeholder }:</label>
+                <label className="control-label col-xs-12 col-sm-2" htmlFor={ field }>{ name }:</label>
                 <div className="col-xs-12 col-sm-10">
-                    <input className="form-control" type="text" name={ name } id={ name } placeholder={ placeholder } ref={ this.getRef } required onChange={ this.onChange }/>
+                    <input className="form-control" type="text" name={ field } id={ field } placeholder={ name } ref={ this.getRef } required onChange={ this.onChange }/>
                 </div>
                 {
                     error && <span className="col-xs-12 col-sm-offset-2 help-block">
@@ -101,8 +92,8 @@ class PaymentForm extends PureComponent {
         return (
             <form onSubmit={ this.onSubmit } autoComplete="on" className="form-horizontal">
                 <h2>Order</h2>
-                { this.renderFormGroup('orderCustomer', 'Customer Name')}
-                { this.renderFormGroup('orderPhone', 'Customer Phone Number')}
+                { this.renderFormGroup('orderCustomer')}
+                { this.renderFormGroup('orderPhone')}
                 <div className={ `form-group ${ this.state.orderCurrencyError ? 'has-error' : ''}` }>
                     <label className="control-label col-xs-12 col-sm-2" htmlFor="orderPrice">Price:</label>
                     <div className="col-xs-8 col-sm-8">
@@ -126,10 +117,10 @@ class PaymentForm extends PureComponent {
                 </div>
                 
                 <h2>Payment</h2>
-                { this.renderFormGroup('cardHolder', 'Card Holder Name')}
-                { this.renderFormGroup('cardNumber', 'Card Number')}
-                { this.renderFormGroup('cardExpiry', 'Card Expiry')}
-                { this.renderFormGroup('cardCvc', 'Card CVC')}
+                { this.renderFormGroup('cardHolder')}
+                { this.renderFormGroup('cardNumber')}
+                { this.renderFormGroup('cardExpiry')}
+                { this.renderFormGroup('cardCvc')}
                 <div className="form-group">
                     <div className="col-xs-12 col-sm-offset-2">
                         <button className="btn btn-default">Submit</button>
