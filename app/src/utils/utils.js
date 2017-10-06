@@ -3,6 +3,6 @@ export const processResponse = (res) =>
         if (res.ok) {
             return data;
         } else {
-            throw data;
+            throw data.meta;
         }
     });

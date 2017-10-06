@@ -7,19 +7,21 @@ class PaymentForm extends PureComponent {
     constructor() {
         super();
         this.inputRefs = {};
-        this.state = {};
+        this.state = {
+            error: {}
+        };
     }
 
     onSubmit = (event) => {
         event.preventDefault();
         const data = {};
 
+        this.clearError();
+
         // extract the data
         for (let field in this.inputRefs) {
             let value = (this.inputRefs[field].value || '').trim();
-            if (field === 'cardNumber') {
-                value = value.replace(/ /g, '');
-            } else if (field === 'cardExpiry') {
+            if (field === 'cardExpiry') {
                 value = Payment.fns.cardExpiryVal(value);
             }
             data[field] = value;
@@ -43,9 +45,15 @@ class PaymentForm extends PureComponent {
             .catch((error) => this.setFieldError(error));
     }
 
+    clearError() {
+        this.setState({ error: {} });
+    }
+
     setFieldError(error) {
         this.setState({
-            [`${error.field}Error`]: `${errorMessageBuilder(error)}`
+            error: Object.assign({}, this.state.error, {
+                [`${error.field}Error`]: `${errorMessageBuilder(error)}`
+            })
         });
     }
 
@@ -60,7 +68,9 @@ class PaymentForm extends PureComponent {
         const target = event.target;
         const name = target.getAttribute('name');
         this.setState({
-            [`${name}Error`]: ''
+            error: Object.assign({}, this.state.error, {
+                [`${name}Error`]: ''
+            })
         });
     }
 
@@ -71,7 +81,7 @@ class PaymentForm extends PureComponent {
     }
 
     renderFormGroup(field) {
-        const error = this.state[`${field}Error`];
+        const error = this.state.error[`${field}Error`];
         const name = fieldToName[field];
         return (
             <div className={ `form-group ${error ? 'has-error' : ''}` }>

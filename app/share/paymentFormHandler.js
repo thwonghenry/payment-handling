@@ -35,7 +35,7 @@ module.exports = {
                 }
                 break;
             case 'cardCvc':
-                if (!Payment.fns.validateCardCVC(value)) {
+                if (!Payment.fns.validateCardCVC(value, formData.cardType)) {
                     return errorMaker(field, 'is invalid');
                 }
                 break;
