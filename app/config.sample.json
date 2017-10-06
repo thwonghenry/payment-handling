@@ -1,0 +1,7 @@
+{
+    "paypal": {
+        "mode": "sandbox",
+        "client_id": "<Your Paypal Client ID>",
+        "client_secret": "<Your Paypal Client Secret>"
+    }
+}

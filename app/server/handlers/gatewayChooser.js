@@ -13,5 +13,8 @@ module.exports = (req, res, next) => {
         };
         return next(error);
     }
-    next();
+    gateway(data, req).then((formData) => {
+        res.send(formData);
+        next();
+    }).catch((error) => next(error));
 };

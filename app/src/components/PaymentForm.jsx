@@ -33,7 +33,7 @@ class PaymentForm extends PureComponent {
             return;
         }
 
-        fetch('/payment', {
+        fetch('/payments', {
             method: 'POST',
             headers: {
                 'content-type': 'application/json'

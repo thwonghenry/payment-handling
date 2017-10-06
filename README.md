@@ -1,5 +1,11 @@
 # Payment Handling Web App
 
+## Paypal account setup
+
+Make sure you have Paypal and Braintree account
+
+Copy `config.sample.json` to `config.json`, and fill in the keys inside `config.json` 
+
 ## Development environment setup
 
 Make sure you have docker installed, then:
