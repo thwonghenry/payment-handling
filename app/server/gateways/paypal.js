@@ -38,7 +38,12 @@ const createCreditCardID = async (data, hash) => {
 };
 
 const getCreditCardID = async (data) => {
-    const hash = hasher(data.cardNumber);
+    const hash = hasher([
+        data.cardNumber,
+        data.cardExpiry.month,
+        data.cardExpiry.year,
+        data.cardCvc
+    ]);
     const cachedData = await redisClient.getAsync(`vault:${hash}`);
     if (!cachedData) {
         return await createCreditCardID;

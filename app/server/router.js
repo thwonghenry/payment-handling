@@ -9,7 +9,6 @@ const router = new express.Router();
 const sendIndexHtml = (req, res) => res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
 
 router.get('/payment-check', sendIndexHtml);
-router.get('/payment-authorized', sendIndexHtml);
 router.post('/payments', paymentValidation, gatewayChooser);
 router.get('/payments/:id', recordChecker);
 

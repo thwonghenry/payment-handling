@@ -22,7 +22,7 @@ const notSupportedCurrencies = [
     'AUD'
 ];
 
-const checkCachedData = async (customerID) => {
+const getCachedData = async (customerID) => {
     const cachedData = await redisClient.getAsync(customerID);
     if (cachedData) {
         const parsed = JSON.parse(cachedData.toString());
@@ -31,20 +31,28 @@ const checkCachedData = async (customerID) => {
     return {};
 };
 
-const createCustomerIfNotExists = async (customerID, cachedData) => {
-    if (cachedData.created) {
-        return cachedData;
+const createCustomer = async (customerID) => {
+    const response = await customerCreate({id: customerID});
+
+    // if the response contains message, it is error and need to throw out
+    if (response.message) {
+        throw response;
     }
-    await customerCreate({id: customerID});
-    cachedData.created = true;
-    redisClient.set(customerID, JSON.stringify(cachedData));
-    return cachedData;
+
+    return customerID;
 };
 
-const createCreditCardTokenIfNotExists = async (data, customerID, hashedCard, cachedData) => {
-    if (cachedData.cards && Object.keys(cachedData.cards).includes(hashedCard)) {
-        return cachedData;
-    }
+/**
+ * Create credit card token from Braintree from the credit card data
+ * 
+ * Return the credit card token
+ * 
+ * @param {object} data The payment form data
+ * @param {string} customerID The hashed customer ID
+ * 
+ * @return {object} The credit card token
+ */
+const createCreditCardToken = async (data, customerID) => {
     const response = await creditCardCreate({
         cardholderName: data.cardHolder,
         customerId: customerID,
@@ -54,30 +62,37 @@ const createCreditCardTokenIfNotExists = async (data, customerID, hashedCard, ca
         number: data.cardNumber,
     });
 
+    // if the response contains message, it is error and need to throw out
     if (response.message) {
         throw response;
     }
-    if (!cachedData.cards) {
-        cachedData.cards = {};
-    }
-    cachedData.cards[hashedCard] = response.creditCard.token;
-    redisClient.set(customerID, JSON.stringify(cachedData));
-    return cachedData;
+
+    return response.creditCard.token;
 };
 
-const createTransaction = async (data, customerID, hashedCard, cachedData) => {
-    const paymentMethodToken = cachedData.cards[hashedCard];
+/**
+ * Create transaction with credit card token
+ * 
+ * Return the response object
+ * 
+ * @param {object} data The payment form data
+ * @param {string} paymentMethodToken The credit card payment method token
+ * 
+ * @return {Object} The response object
+ */
+const createTransaction = async (data, paymentMethodToken) => {
     const response = await transactionSale({
         amount: data.orderPrice,
         merchantAccountId: data.orderCurrency,
         paymentMethodToken
     });
-    return ({
-        paymentID: response.transaction.id,
-        gateway: 'braintree',
-        cardToken: paymentMethodToken,
-        response
-    });
+
+    // if the response contains message, it is error and need to throw out
+    if (response.message) {
+        throw response;
+    }
+
+    return response;
 };
 
 module.exports = {
@@ -86,19 +101,50 @@ module.exports = {
             data.cardType !== 'amex' && !notSupportedCurrencies.includes(data.orderCurrency)
         );
     },
+    /**
+     * Pay with Braintree gateway with credit card data
+     * 
+     * 1. Need to check if we created a customer from the card object and customer name
+     *    - If not, create one
+     * 2. Need to check if we added payment method for the credit card for the customer
+     *    - If not, add one
+     * 3. From the payment method token, create a transaction to pay
+     * 
+     * @param {object} data The payment form data
+     * 
+     * @return {object} The "record" data structure
+     */
     handler: async (data) => {
-        const customerID = hasher(data.cardHolder);
         const hashedCard = hasher([
             data.cardNumber,
             data.cardExpiry.month,
             data.cardExpiry.year,
             data.cardCvc
         ]);
+        const customerID = hasher([data.cardHolder, hashedCard]);
+
         try {
-            let cachedData = await checkCachedData(customerID);
-            cachedData = await createCustomerIfNotExists(customerID, cachedData);
-            cachedData = await createCreditCardTokenIfNotExists(data, customerID, hashedCard, cachedData);
-            return await createTransaction(data, customerID, hashedCard, cachedData);
+            let cachedData = await getCachedData(customerID);
+            if (!cachedData.created) {
+                await createCustomer(customerID);
+                cachedData.created = true;
+                redisClient.set(customerID, JSON.stringify(cachedData));
+            }
+            let cardToken = cachedData.cardToken;
+            if (!cardToken) {
+                cardToken = await createCreditCardToken(data, customerID, cachedData);
+                cachedData.cardToken = cardToken;
+                redisClient.set(customerID, JSON.stringify(cachedData));
+            }
+
+            const response = await createTransaction(data, cardToken);
+
+            return ({
+                paymentID: response.transaction.id,
+                gateway: 'braintree',
+                cardToken,
+                response
+            });
         } catch (error) {
             // format the error
             const errorObj = errorConstructor(error.message, 400, {
