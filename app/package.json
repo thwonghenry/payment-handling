@@ -26,7 +26,6 @@
     "babel-preset-minify": "^0.2.0",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
-    "braintree-web": "^3.23.0",
     "eslint": "^4.8.0",
     "eslint-loader": "^1.9.0",
     "eslint-plugin-import": "^2.7.0",
