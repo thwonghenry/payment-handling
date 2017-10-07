@@ -3,25 +3,20 @@ const hasher = require('../hasher');
 
 const errorConstructor = require('../errorConstructor');
 
-const getRecordByCustomerNameAndPaymentID = (cardHolder, paymentID) => {
-    return new Promise((resolve) => {
+const getRecordByCustomerNameAndPaymentID = async (cardHolder, paymentID) => {
+    try {
         const key = hasher([cardHolder, paymentID]);
-        redisClient.get(`record:${key}`, (err, response) => {
-            if (err) {
-                resolve({});
-                return;
-            }
-            if (response) {
-                const record = JSON.parse(response.toString());
-                resolve(record);
-                return;
-            }
-            resolve({});
-        });
-    });
+        const cachedData = await redisClient.getAsync(`record:${key}`);
+        if (cachedData) {
+            return JSON.parse(cachedData.toString());
+        }
+        return false;
+    } catch (error) {
+        return false;
+    }
 };
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res) => {
     const query = req.query;
     const params = req.params;
     if (!query.orderCustomer || !params.id) {
@@ -35,21 +30,17 @@ module.exports = (req, res, next) => {
         ));
         return;
     }
-    getRecordByCustomerNameAndPaymentID(query.orderCustomer, params.id)
-        .then((data) => {
-            if (data.paymentID) {
-                res.send(data);
-                next();
-            } else {
-                // TODO: get data using API
-                res.status(404).send(errorConstructor(
-                    'Record Not Found',
-                    404,
-                    {
-                        field: 'general',
-                        reason: 'Record Not Found'
-                    }
-                ));
+    const record = await getRecordByCustomerNameAndPaymentID(query.orderCustomer, params.id);
+    if (record) {
+        res.send(record);
+    } else {
+        res.status(404).send(errorConstructor(
+            'Record Not Found',
+            404,
+            {
+                field: 'general',
+                reason: 'Record Not Found'
             }
-        });
+        ));
+    }
 };
