@@ -1,5 +1,5 @@
 const gateways = require('../gateways');
-const errorConstructor = require('../error');
+const errorConstructor = require('../errorConstructor');
 const redisClient = require('../redisClient');
 const getHashFromData = redisClient.getHashFromData; 
 

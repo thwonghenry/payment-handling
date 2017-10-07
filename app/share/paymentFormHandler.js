@@ -1,3 +1,5 @@
+// Common form validation for both client and server side
+
 const Payment = require('payment');
 
 const fieldToName = {

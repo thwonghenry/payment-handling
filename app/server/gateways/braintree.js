@@ -1,4 +1,5 @@
 const braintree = require('braintree');
+const errorConstructor = require('../errorConstructor');
 const redisClient = require('../redisClient');
 const getHashFromData = redisClient.getHashFromData;
 
@@ -65,6 +66,11 @@ const createCreditCardTokenIfNotExists = (data, customerID, hashedCard) => (cach
             return;
         }
 
+        if (response.message) {
+            reject(response);
+            return;
+        }
+
         if (!cachedData.cards) {
             cachedData.cards = {};
         }
@@ -111,6 +117,13 @@ module.exports = {
         return checkCachedData(customerID)
             .then(createCustomerIfNotExists(customerID))
             .then(createCreditCardTokenIfNotExists(data, customerID, hashedCard))
-            .then(createTransaction(data, customerID, hashedCard));
+            .then(createTransaction(data, customerID, hashedCard))
+            .catch((error) => {
+                const errorObj = errorConstructor(error.message, 400, {
+                    field: 'general',
+                    reason: error.message
+                });
+                throw errorObj;
+            });
     }
 };

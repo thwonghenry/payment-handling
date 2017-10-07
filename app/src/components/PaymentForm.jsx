@@ -116,14 +116,14 @@ class PaymentForm extends PureComponent {
         Payment.formatCardCVC(this.inputRefs.cardCvc);
     }
 
-    renderFormGroup(field) {
+    renderFormGroup(field, type = 'text') {
         const error = this.state.error[`${field}Error`];
         const name = fieldToName[field];
         return (
             <div className={ `form-group ${error ? 'has-error' : ''}` }>
                 <label className="control-label col-xs-12 col-sm-2" htmlFor={ field }>{ name }:</label>
                 <div className="col-xs-12 col-sm-10">
-                    <input className="form-control" type="text" name={ field } id={ field } placeholder={ name } ref={ this.getRef } required onChange={ this.onChange }/>
+                    <input className="form-control" type={ type } name={ field } id={ field } placeholder={ name } ref={ this.getRef } required onChange={ this.onChange }/>
                 </div>
                 {
                     error && <span className="col-xs-12 col-sm-offset-2 help-block">
@@ -139,7 +139,7 @@ class PaymentForm extends PureComponent {
             <form onSubmit={ this.onSubmit } autoComplete="on" className="form-horizontal">
                 <h2>Order</h2>
                 { this.renderFormGroup('orderCustomer')}
-                { this.renderFormGroup('orderPhone')}
+                { this.renderFormGroup('orderPhone', 'tel')}
                 <div className={ `form-group ${ this.state.orderCurrencyError ? 'has-error' : ''}` }>
                     <label className="control-label col-xs-12 col-sm-2" htmlFor="orderPrice">Price:</label>
                     <div className="col-xs-8 col-sm-8">

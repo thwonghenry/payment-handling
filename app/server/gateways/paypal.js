@@ -1,7 +1,7 @@
 const paypal = require('paypal-rest-sdk');
 const redisClient = require('../redisClient');
 const getHashFromData = redisClient.getHashFromData;
-const errorConstructor = require('../error');
+const errorConstructor = require('../errorConstructor');
 
 paypal.configure({
     mode: process.env.PAYPAL_MODE,
@@ -55,7 +55,7 @@ const getCreditCardID = (data) => {
     });
 };
 
-const createTransaction = (data, hostUrl) => (creditCardID) => {
+const createTransaction = (data) => (creditCardID) => {
     const paymentData = {
         intent: 'sale',
         payer: {
@@ -72,18 +72,15 @@ const createTransaction = (data, hostUrl) => (creditCardID) => {
                 currency: data.orderCurrency
             },
             description: 'Payment description'
-        }],
-        redirect_urls: {
-            return_url: `${hostUrl}/payment-authorized`,
-            cancel_url: `${hostUrl}`
-        }
+        }]
     };
     return new Promise((resolve, reject) => {
         paypal.payment.create(paymentData, (error, response) => {
             if (error) {
                 const errorObj = errorConstructor(error.response.message, error.httpStatusCode, {
                     field: 'general',
-                    reason: error.response.message
+                    reason: error.response.message,
+                    response: error
                 });
                 reject(errorObj);
                 return;
@@ -105,8 +102,7 @@ module.exports = {
             data.cardType === 'amex' && data.orderCurrency === 'USD'
         );
     },
-    handler: (data, req) => {
-        const hostUrl = `${req.protocol}://${req.get('Host')}`;
-        return getCreditCardID(data).then(createTransaction(data, hostUrl));
+    handler: (data) => {
+        return getCreditCardID(data).then(createTransaction(data));
     }
 };

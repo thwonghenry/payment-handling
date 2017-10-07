@@ -1,6 +1,6 @@
 const Payment = require('payment');
 const paymentFormHandler = require('../../share/paymentFormHandler');
-const errorConstructor = require('../error');
+const errorConstructor = require('../errorConstructor');
 
 module.exports = (req, res, next) => {
     req.body.cardType = Payment.fns.cardType(req.body.cardNumber);
@@ -16,6 +16,7 @@ module.exports = (req, res, next) => {
         return;
     }
 
+    // we validate once again because client cannot be trusted
     const error = paymentFormHandler.validateForm(paymentData);
 
     if (error !== true) {
