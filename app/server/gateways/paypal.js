@@ -72,7 +72,7 @@ const createTransaction = async (data, creditCardID) => {
             gateway: 'paypal',
             cardToken: creditCardID,
             response
-        }
+        };
     } catch (error) {
         throw errorConstructor(error.response.message, error.httpStatusCode, {
             field: 'general',

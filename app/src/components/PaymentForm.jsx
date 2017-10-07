@@ -17,7 +17,7 @@ class PaymentForm extends PureComponent {
         };
     }
 
-    onSubmit = (event) => {
+    onSubmit = async (event) => {
         event.preventDefault();
         if (this.state.submitting) {
             return;
@@ -43,24 +43,23 @@ class PaymentForm extends PureComponent {
 
         this.setState({ submitting: true });
 
-        fetch('/payments', {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-            .then(processResponse)
-            .then((data) => {
-                this.resetFields();
-                this.setState({ paymentID: data.paymentID });
-                this.setState({ openModal: true });
-                this.setState({ submitting: false });
-            })
-            .catch((error) => {
-                this.setFieldError(error);
-                this.setState({ submitting: false });
+        try {
+            const response = await fetch('/payments', {
+                method: 'POST',
+                headers: {
+                    'content-type': 'application/json'
+                },
+                body: JSON.stringify(data)
             });
+            const responseData = await processResponse(response);
+            this.resetFields();
+            this.setState({ paymentID: responseData.paymentID });
+            this.setState({ openModal: true });
+            this.setState({ submitting: false });
+        } catch (error) {
+            this.setFieldError(error);
+            this.setState({ submitting: false });
+        }
     }
 
     resetFields() {

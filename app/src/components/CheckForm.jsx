@@ -16,7 +16,7 @@ class CheckForm extends PureComponent {
         };
     }
 
-    onSubmit = (event) => {
+    onSubmit = async (event) => {
         event.preventDefault();
         if (this.state.submitting) {
             return;
@@ -39,17 +39,16 @@ class CheckForm extends PureComponent {
 
         this.setState({ submitting: true });
 
-        fetch(`/payments/${data.paymentID}?orderCustomer=${encodeURI(data.orderCustomer)}`)
-            .then(processResponse)
-            .then((data) => {
-                this.setState({ record: data });
-                this.setState({ openModal: true });
-                this.setState({ submitting: false });
-            })
-            .catch((error) => {
-                this.setFieldError(error);
-                this.setState({ submitting: false });
-            });
+        try {
+            const response = await fetch(`/payments/${data.paymentID}?orderCustomer=${encodeURI(data.orderCustomer)}`);
+            const responseData = await processResponse(response);
+            this.setState({ record: responseData });
+            this.setState({ openModal: true });
+            this.setState({ submitting: false });
+        } catch (error) {
+            this.setFieldError(error);
+            this.setState({ submitting: false });
+        }
     }
 
     closeModal = () => {
