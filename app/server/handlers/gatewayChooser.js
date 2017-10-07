@@ -24,7 +24,7 @@ module.exports = (req, res, next) => {
         delete appendedData.cardType;
 
         // use card holder number and payment ID as key, so we can get it later by these two fields
-        const key = getHashFromData([data.cardHolder, meta.paymentID]);
+        const key = getHashFromData([data.orderCustomer, meta.paymentID]);
         redisClient.set(`record:${key}`, JSON.stringify(appendedData));
 
         res.send({ paymentID: meta.paymentID });

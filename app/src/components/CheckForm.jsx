@@ -1,11 +1,10 @@
 import React, { PureComponent } from 'react';
-import Payment from 'payment';
 import { processResponse } from '../utils/utils';
-import { validateForm, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
+import { fieldToName } from '../../share/paymentFormHandler';
 import ReactLoading from 'react-loading';
 import Modal from 'react-modal';
 
-class PaymentForm extends PureComponent {
+class CheckForm extends PureComponent {
     constructor() {
         super();
         this.inputRefs = {};
@@ -29,31 +28,21 @@ class PaymentForm extends PureComponent {
         // extract the data
         for (let field in this.inputRefs) {
             let value = (this.inputRefs[field].value || '').trim();
-            if (field === 'cardExpiry') {
-                value = Payment.fns.cardExpiryVal(value);
-            }
             data[field] = value;
-        }
-
-        const error = validateForm(data);
-        if (error !== true) {
-            this.setFieldError(error);
-            return;
+            if (!value) {
+                this.setFieldError({
+                    field,
+                    reason: 'Cannot be empty'
+                });
+            }
         }
 
         this.setState({ submitting: true });
 
-        fetch('/payments', {
-            method: 'POST',
-            headers: {
-                'content-type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
+        fetch(`/payments/${data.paymentID}?orderCustomer=${encodeURI(data.orderCustomer)}`)
             .then(processResponse)
             .then((data) => {
-                this.resetFields();
-                this.setState({ paymentID: data.paymentID });
+                this.setState({ record: data });
                 this.setState({ openModal: true });
                 this.setState({ submitting: false });
             })
@@ -61,12 +50,6 @@ class PaymentForm extends PureComponent {
                 this.setFieldError(error);
                 this.setState({ submitting: false });
             });
-    }
-
-    resetFields() {
-        for (let field in this.inputRefs) {
-            this.inputRefs[field].value = '';
-        }
     }
 
     closeModal = () => {
@@ -88,7 +71,7 @@ class PaymentForm extends PureComponent {
         }
         this.setState({
             error: Object.assign({}, this.state.error, {
-                [`${error.field}Error`]: `${errorMessageBuilder(error)}`
+                [`${error.field}Error`]: error.reason
             })
         });
     }
@@ -110,15 +93,9 @@ class PaymentForm extends PureComponent {
         });
     }
 
-    componentDidMount() {
-        Payment.formatCardNumber(this.inputRefs.cardNumber);
-        Payment.formatCardExpiry(this.inputRefs.cardExpiry);
-        Payment.formatCardCVC(this.inputRefs.cardCvc);
-    }
-
     renderFormGroup(field) {
         const error = this.state.error[`${field}Error`];
-        const name = fieldToName[field];
+        const name = fieldToName[field] || 'Payment ID';
         return (
             <div className={ `form-group ${error ? 'has-error' : ''}` }>
                 <label className="control-label col-xs-12 col-sm-2" htmlFor={ field }>{ name }:</label>
@@ -137,36 +114,8 @@ class PaymentForm extends PureComponent {
     render() {
         return (
             <form onSubmit={ this.onSubmit } autoComplete="on" className="form-horizontal">
-                <h2>Order</h2>
                 { this.renderFormGroup('orderCustomer')}
-                { this.renderFormGroup('orderPhone')}
-                <div className={ `form-group ${ this.state.orderCurrencyError ? 'has-error' : ''}` }>
-                    <label className="control-label col-xs-12 col-sm-2" htmlFor="orderPrice">Price:</label>
-                    <div className="col-xs-8 col-sm-8">
-                        <input className="form-control" type="number" name="orderPrice" id="orderPrice" placeholder="Price" ref={ this.getRef } required onChange={ this.onChange } />
-                    </div>
-                    <div className="col-xs-4 col-sm-2">
-                        <select className="form-control" name="orderCurrency" id="orderCurrency" required ref={ this.getRef } onChange={ this.onChange }>
-                            <option value="HKD">HKD</option>
-                            <option value="USD">USD</option>
-                            <option value="AUD">AUD</option>
-                            <option value="EUR">EUR</option>
-                            <option value="JPY">JPY</option>
-                            <option value="CNY">CNY</option>
-                        </select>
-                    </div>
-                    {
-                        this.state.orderCurrencyError && <span className="col-xs-12 col-sm-offset-2 help-block">
-                            { this.state.orderCurrencyError }
-                        </span>
-                    }
-                </div>
-                
-                <h2>Payment</h2>
-                { this.renderFormGroup('cardHolder')}
-                { this.renderFormGroup('cardNumber')}
-                { this.renderFormGroup('cardExpiry')}
-                { this.renderFormGroup('cardCvc')}
+                { this.renderFormGroup('paymentID')}
                 <div className="form-group">
                     <div className="col-xs-12 col-sm-offset-2">
                         <button className="btn btn-default" disabled={ this.state.submitting ? true : false } >
@@ -211,17 +160,31 @@ class PaymentForm extends PureComponent {
                     <div>
                         {
                             this.state.generalError && (<div className="container">
-                                <h2>Payment Failure</h2>
+                                <h2>Check Failure</h2>
                                 <p>There is something wrong.</p>
                                 <p>{ this.state.generalError }</p>
-                                <p>Please try with different card.</p>
+                                <p>Please check the customer name or payment ID is correct and match</p>
                             </div>)
                         }
                         {
-                            !this.state.generalError && (<div className="container">
-                                <h2>Payment success</h2>
-                                <p>The order ID: <strong>{ this.state.paymentID }</strong></p>
-                                <p>Please remember the order ID for future reference</p>
+                            !this.state.generalError && this.state.record && (<div className="container">
+                                <h2>Payment Record</h2>
+                                <p>
+                                    <strong>Customer Name: </strong>
+                                    { this.state.record.orderCustomer }
+                                </p>
+                                <p>
+                                    <strong>Customer Phone Number: </strong>
+                                    { this.state.record.orderPhone }
+                                </p>
+                                <p>
+                                    <strong>Price: </strong>
+                                    { this.state.record.orderPrice }
+                                </p>
+                                <p>
+                                    <strong>Currency: </strong>
+                                    { this.state.record.orderCurrency }
+                                </p>
                             </div>)
                         }
                     </div>
@@ -231,4 +194,4 @@ class PaymentForm extends PureComponent {
     }
 }
 
-export default PaymentForm;
+export default CheckForm;

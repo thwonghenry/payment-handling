@@ -8,7 +8,7 @@ const fieldToName = {
     'cardHolder': 'Card Holder Name',
     'cardNumber': 'Card Number',
     'cardExpiry': 'Card Expiry',
-    'cardCvc': 'Card CVC'
+    'cardCvc': 'Card CVC',
 };
 
 const requiredFields = Object.keys(fieldToName);
