@@ -23,7 +23,7 @@ const notSupportedCurrencies = [
 ];
 
 const getCachedData = async (customerID) => {
-    const cachedData = await redisClient.getAsync(customerID);
+    const cachedData = await redisClient.getAsync(`braintree:${customerID}`);
     if (cachedData) {
         const parsed = JSON.parse(cachedData.toString());
         return parsed;
@@ -147,11 +147,11 @@ module.exports = {
             });
         } catch (error) {
             // format the error
-            const errorObj = errorConstructor(error.message, 400, {
+            throw errorConstructor(error.message, 400, {
                 field: 'general',
-                reason: error.message
+                reason: error.message,
+                response: error
             });
-            throw errorObj;
         }
     }
 };

@@ -30,6 +30,6 @@ module.exports = async (req, res) => {
     
         res.send({ paymentID: meta.paymentID });
     } catch (error) {
-        res.status(error.statusCode).send(error);
+        res.status(error.statusCode || 400).send(error);
     }
 };

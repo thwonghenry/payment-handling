@@ -19,34 +19,27 @@ const supportCurrencies = [
     'AUD'
 ];
 
-const createCreditCardID = async (data, hash) => {
-    try {
-        const response = await creditCardCreate({
-            number: data.cardNumber.replace(/ /g, ''),
-            type: data.cardType,
-            expire_month: data.cardExpiry.month,
-            expire_year: data.cardExpiry.year
-        });
-        redisClient.set(`vault:${hash}`, response.id);
-        return response.id;
-    } catch (error) {
-        throw errorConstructor(error.response.message, error.httpStatusCode, {
-            field: 'general',
-            reason: error.response.message
-        });
-    }
+/**
+ * Create credit card ID to vault
+ * 
+ * @param {object} data The payment form data
+ * 
+ * @return {string} The credit card ID
+ */
+const createCreditCardID = async (data) => {
+    const response = await creditCardCreate({
+        number: data.cardNumber.replace(/ /g, ''),
+        type: data.cardType,
+        expire_month: data.cardExpiry.month,
+        expire_year: data.cardExpiry.year
+    });
+    return response.id;
 };
 
-const getCreditCardID = async (data) => {
-    const hash = hasher([
-        data.cardNumber,
-        data.cardExpiry.month,
-        data.cardExpiry.year,
-        data.cardCvc
-    ]);
-    const cachedData = await redisClient.getAsync(`vault:${hash}`);
+const getCreditCardID = async (hash) => {
+    const cachedData = await redisClient.getAsync(`paypal:${hash}`);
     if (!cachedData) {
-        return await createCreditCardID;
+        return false;
     }
     return cachedData.toString();
 };
@@ -70,21 +63,7 @@ const createTransaction = async (data, creditCardID) => {
             description: 'Payment description'
         }]
     };
-    try {
-        const response = await paymentCreate(paymentData);
-        return {
-            paymentID: response.id,
-            gateway: 'paypal',
-            cardToken: creditCardID,
-            response
-        };
-    } catch (error) {
-        throw errorConstructor(error.response.message, error.httpStatusCode, {
-            field: 'general',
-            reason: error.response.message,
-            response: error
-        });
-    }
+    return await paymentCreate(paymentData);
 };
 
 module.exports = {
@@ -94,8 +73,43 @@ module.exports = {
             data.cardType === 'amex' && data.orderCurrency === 'USD'
         );
     },
+    /**
+     * Pay with Paypal gateway with credit card
+     * 
+     * 1. Get the credit card token from Paypal vault
+     *    - If not exists, create one
+     * 2. Pay with the credit card token
+     * 
+     * @param {object} data The payment form data
+     * 
+     * @return {object} The "record" data structure
+     */
     handler: async (data) => {
-        const creditCardID = await getCreditCardID(data);
-        return await createTransaction(data, creditCardID);
+        const hash = hasher([
+            data.cardNumber,
+            data.cardExpiry.month,
+            data.cardExpiry.year,
+            data.cardCvc
+        ]);
+        try {
+            let creditCardID = await getCreditCardID(hash);
+            if (!creditCardID) {
+                creditCardID = await createCreditCardID(data);
+                redisClient.set(`paypal:${hash}`, creditCardID);
+            }
+            const response = await createTransaction(data, creditCardID);
+            return {
+                paymentID: response.id,
+                gateway: 'paypal',
+                cardToken: creditCardID,
+                response
+            };
+        } catch (error) {
+            throw errorConstructor(error.response.message, error.httpStatusCode, {
+                field: 'general',
+                reason: error.response.message,
+                response: error
+            });
+        }
     }
 };
