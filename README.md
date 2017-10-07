@@ -31,8 +31,12 @@ This repository support deployment to Heroku
 
 Make sure you have registered Heroku account and installed heroku-cli
 
+Also entered the credit card to gain access to Heroku Redis add-on
+
 ```
 heroku login
 heroku container:push web
 heroku open
 ``` 
+
+Set the enviornments variable located in .env.sample in Heroku Dashboard

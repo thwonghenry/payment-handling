@@ -2,18 +2,26 @@ import React, { PureComponent } from 'react';
 import Payment from 'payment';
 import { processResponse } from '../utils/utils';
 import { validateForm, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
+import ReactLoading from 'react-loading';
+import Modal from 'react-modal';
 
 class PaymentForm extends PureComponent {
     constructor() {
         super();
         this.inputRefs = {};
         this.state = {
-            error: {}
+            error: {},
+            submitting: false,
+            openModal: false,
+            paymentID: ''
         };
     }
 
     onSubmit = (event) => {
         event.preventDefault();
+        if (this.state.submitting) {
+            return;
+        }
         const data = {};
 
         this.clearError();
@@ -33,6 +41,8 @@ class PaymentForm extends PureComponent {
             return;
         }
 
+        this.setState({ submitting: true });
+
         fetch('/payments', {
             method: 'POST',
             headers: {
@@ -41,8 +51,20 @@ class PaymentForm extends PureComponent {
             body: JSON.stringify(data)
         })
             .then(processResponse)
-            .then((data) => console.log(data))
-            .catch((error) => this.setFieldError(error));
+            .then((data) => {
+                this.setState({ paymentID: data.paymentID });
+                this.setState({ openModal: true });
+                this.setState({ submitting: false });
+            })
+            .catch((error) => {
+                this.setFieldError(error);
+                this.setState({ submitting: false });
+            });
+    }
+
+    closeModal = () => {
+        this.setState({ openModal: false });
+        this.setState({ generalError: '' });
     }
 
     clearError() {
@@ -50,6 +72,13 @@ class PaymentForm extends PureComponent {
     }
 
     setFieldError(error) {
+        if (error.field === 'general') {
+            this.setState({ openModal: true });
+            this.setState({
+                generalError: error.reason
+            });
+            return;
+        }
         this.setState({
             error: Object.assign({}, this.state.error, {
                 [`${error.field}Error`]: `${errorMessageBuilder(error)}`
@@ -133,9 +162,63 @@ class PaymentForm extends PureComponent {
                 { this.renderFormGroup('cardCvc')}
                 <div className="form-group">
                     <div className="col-xs-12 col-sm-offset-2">
-                        <button className="btn btn-default">Submit</button>
+                        <button className="btn btn-default" disabled={ this.state.submitting ? true : false } >
+                            <span style={{
+                                display: 'inline-block',
+                                verticalAlign: 'middle'
+                            }}>Submit</span>
+                            { 
+                                this.state.submitting && <span style={{
+                                    display: 'inline-block',
+                                    verticalAlign: 'middle',
+                                    marginLeft: 5
+                                }}>
+                                    <ReactLoading height={ 12 } width={ 12 } />
+                                </span>
+                            }
+                        </button>
+                        <span style={{
+                            color: '#e74c3c',
+                            marginLeft: 20
+                        }}>
+                            { this.state.generalError }
+                        </span>
                     </div>
                 </div>
+                <Modal
+                    isOpen={ this.state.openModal }
+                    onRequestClose={ this.closeModal }
+                    style={{
+                        overlay: {
+                            backgroundColor: 'rgba(0, 0, 0, 0.5)'
+                        },
+                        content: {
+                            padding: 40,
+                            border: 'none'
+                        }
+                    }}
+                    className={{
+                        base: `alert ${this.state.generalError ? 'alert-danger' : 'alert-success'}`
+                    }}
+                >
+                    <div>
+                        {
+                            this.state.generalError && (<div className="container">
+                                <h2>Payment Failure</h2>
+                                <p>There is something wrong.</p>
+                                <p>{ this.state.generalError }</p>
+                                <p>Please try with different card.</p>
+                            </div>)
+                        }
+                        {
+                            !this.state.generalError && (<div className="container">
+                                <h2>Payment success</h2>
+                                <p>The order ID: <strong>{ this.state.paymentID }</strong></p>
+                                <p>Please remember the order ID for future reference</p>
+                            </div>)
+                        }
+                    </div>
+                </Modal>
             </form>
         );
     }

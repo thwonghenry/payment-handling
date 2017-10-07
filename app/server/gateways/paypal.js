@@ -1,6 +1,7 @@
 const paypal = require('paypal-rest-sdk');
 const redisClient = require('../redisClient');
 const getHashFromData = redisClient.getHashFromData;
+const errorConstructor = require('../error');
 
 paypal.configure({
     mode: process.env.PAYPAL_MODE,
@@ -21,13 +22,16 @@ const createCreditCardID = (data, hash) => {
             type: data.cardType,
             expire_month: data.cardExpiry.month,
             expire_year: data.cardExpiry.year
-        }, (error, data) => {
+        }, (error, response) => {
             if (error) {
-                reject(error);
+                reject(errorConstructor(error.response.message, error.httpStatusCode, {
+                    field: 'general',
+                    reason: error.response.message
+                }));
                 return;
             }
-            redisClient.set(`vault:${hash}`, data.id);
-            resolve(data.id);
+            redisClient.set(`vault:${hash}`, response.id);
+            resolve(response.id);
         });
     });
 };
@@ -44,9 +48,52 @@ const getCreditCardID = (data) => {
                 createCreditCardID(data, hash)
                     .then((id) => resolve(id))
                     .catch((error) => reject(error));
+            } else {
+                resolve(response.toString());
+            }
+        });
+    });
+};
+
+const createTransaction = (data, hostUrl) => (creditCardID) => {
+    const paymentData = {
+        intent: 'sale',
+        payer: {
+            payment_method: 'credit_card',
+            funding_instruments: [{
+                credit_card_token: {
+                    credit_card_id: creditCardID
+                }
+            }]
+        },
+        transactions: [{
+            amount: {
+                total: data.orderPrice,
+                currency: data.orderCurrency
+            },
+            description: 'Payment description'
+        }],
+        redirect_urls: {
+            return_url: `${hostUrl}/payment-authorized`,
+            cancel_url: `${hostUrl}`
+        }
+    };
+    return new Promise((resolve, reject) => {
+        paypal.payment.create(paymentData, (error, response) => {
+            if (error) {
+                const errorObj = errorConstructor(error.response.message, error.httpStatusCode, {
+                    field: 'general',
+                    reason: error.response.message
+                });
+                reject(errorObj);
                 return;
             }
-            return resolve(response.toString());
+            resolve({
+                paymentID: response.id,
+                gateway: 'paypal',
+                cardToken: creditCardID,
+                response
+            });
         });
     });
 };
@@ -60,56 +107,6 @@ module.exports = {
     },
     handler: (data, req) => {
         const hostUrl = `${req.protocol}://${req.get('Host')}`;
-        return getCreditCardID(data).then((creditCardID) => {
-            const paymentData = {
-                intent: 'sale',
-                payer: {
-                    payment_method: 'credit_card',
-                    funding_instruments: [{
-                        credit_card_token: {
-                            credit_card_id: creditCardID
-                        }
-                    }]
-                },
-                transactions: [{
-                    amount: {
-                        total: data.orderPrice,
-                        currency: data.orderCurrency
-                    },
-                    description: 'Payment description'
-                }],
-                redirect_urls: {
-                    return_url: `${hostUrl}/payment-authorized`,
-                    cancel_url: `${hostUrl}`
-                }
-            };
-            return new Promise((resolve, reject) => {
-                paypal.payment.create(paymentData, (error, response) => {
-                    if (error) {
-                        console.log(JSON.stringify(error));
-                        reject(error);
-                    } else {
-                        // save the record
-                        const paymentID = response.id;
-                        const appendedData = Object.assign({}, data, {
-                            paymentID,
-                            gateway: 'paypal',
-                            cardToken: creditCardID
-                        });
-                        // use token to replace credit card data
-                        delete appendedData.cardExpiry;
-                        delete appendedData.cardHolder;
-                        delete appendedData.cardNumber;
-                        delete appendedData.cardType;
-
-                        // use card holder numabe and payment ID as key, so we can get it later by these two fields
-                        const key = getHashFromData([data.cardHolder, paymentID]);
-                        redisClient.set(`record:${key}`, JSON.stringify(appendedData));
-
-                        resolve({ paymentID });
-                    }
-                });
-            });
-        });
+        return getCreditCardID(data).then(createTransaction(data, hostUrl));
     }
 };
