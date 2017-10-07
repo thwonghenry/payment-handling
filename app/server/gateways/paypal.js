@@ -1,6 +1,6 @@
 const paypal = require('paypal-rest-sdk');
 const redisClient = require('../redisClient');
-const getHashFromData = redisClient.getHashFromData;
+const hasher = require('../hasher');
 const errorConstructor = require('../errorConstructor');
 
 paypal.configure({
@@ -37,7 +37,7 @@ const createCreditCardID = (data, hash) => {
 };
 
 const getCreditCardID = (data) => {
-    const hash = getHashFromData(data.cardNumber);
+    const hash = hasher(data.cardNumber);
     return new Promise((resolve, reject) => {
         redisClient.get(`vault:${hash}`, (error, response) => {
             if (error) {

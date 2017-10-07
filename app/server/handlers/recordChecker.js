@@ -1,11 +1,11 @@
 const redisClient = require('../redisClient');
-const getHashFromData = redisClient.getHashFromData;
+const hasher = require('../hasher');
 
 const errorConstructor = require('../errorConstructor');
 
 const getRecordByCustomerNameAndPaymentID = (cardHolder, paymentID) => {
     return new Promise((resolve) => {
-        const key = getHashFromData([cardHolder, paymentID]);
+        const key = hasher([cardHolder, paymentID]);
         redisClient.get(`record:${key}`, (err, response) => {
             if (err) {
                 resolve({});

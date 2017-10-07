@@ -1,5 +1,6 @@
 import path from 'path';
 import MinifyPlugin from 'babel-minify-webpack-plugin';
+import webpack from 'webpack';
 
 const rootDir = path.resolve(__dirname, '../');
 
@@ -25,15 +26,21 @@ const config = {
                 'eslint-loader'
             ]
         }]
-    }
+    },
 };
 
 if (env === 'development') {
     config.devtool = 'inline-source-map';
 } else {
-    config.plugins = (config.plugins || []).concat([
+    config.plugins = [
+        ...(config.plugins || []),
+        new webpack.DefinePlugin({
+            'process.env': {
+                NODE_ENV: JSON.stringify('production')
+            }
+        }),
         new MinifyPlugin()
-    ]);
+    ];
 }
 
 export default config;

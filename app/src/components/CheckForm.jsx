@@ -70,9 +70,10 @@ class CheckForm extends PureComponent {
             return;
         }
         this.setState({
-            error: Object.assign({}, this.state.error, {
+            error: {
+                ...this.state.error,
                 [`${error.field}Error`]: error.reason
-            })
+            }
         });
     }
 
@@ -87,9 +88,10 @@ class CheckForm extends PureComponent {
         const target = event.target;
         const name = target.getAttribute('name');
         this.setState({
-            error: Object.assign({}, this.state.error, {
+            error: {
+                ...this.state.error,
                 [`${name}Error`]: ''
-            })
+            }
         });
     }
 

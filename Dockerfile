@@ -1,8 +1,5 @@
 FROM mhart/alpine-node:8
 
-# use yarn instead of npm for better package management
-RUN apk add --no-cache yarn
-
 # Heroku must use /app as the working directory
 WORKDIR app
 ENV HOME="/app"
