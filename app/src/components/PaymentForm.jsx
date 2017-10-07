@@ -41,7 +41,7 @@ class PaymentForm extends PureComponent {
             body: JSON.stringify(data)
         })
             .then(processResponse)
-            .then((data) => console.log('done', data))
+            .then((data) => console.log(data))
             .catch((error) => this.setFieldError(error));
     }
 

@@ -7,6 +7,7 @@
     "dev": "NODE_ENV=development webpack --config src/webpack.config.babel.js --watch"
   },
   "dependencies": {
+    "braintree": "^2.3.0",
     "express": "^4.16.1",
     "paypal-rest-sdk": "^1.7.1",
     "redis": "^2.8.0",
@@ -23,6 +24,7 @@
     "babel-preset-minify": "^0.2.0",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
+    "braintree-web": "^3.23.0",
     "css-loader": "^0.28.7",
     "dotenv-webpack": "^1.5.4",
     "eslint": "^4.8.0",

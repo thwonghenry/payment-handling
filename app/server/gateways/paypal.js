@@ -93,6 +93,7 @@ module.exports = {
                         const paymentID = response.id;
                         const appendedData = Object.assign({}, data, {
                             paymentID,
+                            gateway: 'paypal',
                             cardToken: creditCardID
                         });
                         // use token to replace credit card data
@@ -105,7 +106,7 @@ module.exports = {
                         const key = getHashFromData([data.cardHolder, paymentID]);
                         redisClient.set(`record:${key}`, JSON.stringify(appendedData));
 
-                        resolve({ paymentID: response.id });
+                        resolve({ paymentID });
                     }
                 });
             });
