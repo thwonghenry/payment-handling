@@ -3,7 +3,7 @@ const errorConstructor = require('../errorConstructor');
 const redisClient = require('../redisClient');
 const hasher = require('../hasher');
 
-module.exports = (req, res, next) => {
+module.exports = async (req, res) => {
     const data = req.body;
 
     const gateway = gateways(data);
@@ -15,21 +15,21 @@ module.exports = (req, res, next) => {
         res.status(error.statusCode).send(error);
         return;
     }
-    gateway(data, req).then((meta) => {
+    try {
+        const meta = await gateway(data, req);
         const appendedData = Object.assign({}, data, meta);
         // use token to replace credit card data
         delete appendedData.cardExpiry;
         delete appendedData.cardHolder;
         delete appendedData.cardNumber;
         delete appendedData.cardType;
-
+    
         // use card holder number and payment ID as key, so we can get it later by these two fields
         const key = hasher([data.orderCustomer, meta.paymentID]);
         redisClient.set(`record:${key}`, JSON.stringify(appendedData));
-
+    
         res.send({ paymentID: meta.paymentID });
-        next();
-    }).catch((error) => {
+    } catch (error) {
         res.status(error.statusCode).send(error);
-    });
+    }
 };

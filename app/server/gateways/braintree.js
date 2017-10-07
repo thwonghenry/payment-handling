@@ -12,7 +12,6 @@ const gateway = braintree.connect({
 });
 
 // define promisifed object here so they are reused
-const redisGet = promisify(redisClient, 'get');
 const customerCreate = promisify(gateway.customer, 'create');
 const creditCardCreate = promisify(gateway.creditCard, 'create');
 const transactionSale = promisify(gateway.transaction, 'sale');
@@ -24,7 +23,7 @@ const notSupportedCurrencies = [
 ];
 
 const checkCachedData = async (customerID) => {
-    const cachedData = await redisGet(customerID);
+    const cachedData = await redisClient.getAsync(customerID);
     if (cachedData) {
         const parsed = JSON.parse(cachedData.toString());
         return parsed;

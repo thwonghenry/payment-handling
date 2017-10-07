@@ -2,6 +2,7 @@ const paypal = require('paypal-rest-sdk');
 const redisClient = require('../redisClient');
 const hasher = require('../hasher');
 const errorConstructor = require('../errorConstructor');
+const promisify = require('../promisify');
 
 paypal.configure({
     mode: process.env.PAYPAL_MODE,
@@ -9,53 +10,43 @@ paypal.configure({
     client_secret: process.env.PAYPAL_CLIENT_SECRET
 });
 
+const creditCardCreate = promisify(paypal.creditCard, 'create');
+const paymentCreate = promisify(paypal.payment, 'create');
+
 const supportCurrencies = [
     'USD',
     'EUR',
     'AUD'
 ];
 
-const createCreditCardID = (data, hash) => {
-    return new Promise((resolve, reject) => {
-        paypal.creditCard.create({
+const createCreditCardID = async (data, hash) => {
+    try {
+        const response = await creditCardCreate({
             number: data.cardNumber.replace(/ /g, ''),
             type: data.cardType,
             expire_month: data.cardExpiry.month,
             expire_year: data.cardExpiry.year
-        }, (error, response) => {
-            if (error) {
-                reject(errorConstructor(error.response.message, error.httpStatusCode, {
-                    field: 'general',
-                    reason: error.response.message
-                }));
-                return;
-            }
-            redisClient.set(`vault:${hash}`, response.id);
-            resolve(response.id);
         });
-    });
+        redisClient.set(`vault:${hash}`, response.id);
+        return response.id;
+    } catch (error) {
+        throw errorConstructor(error.response.message, error.httpStatusCode, {
+            field: 'general',
+            reason: error.response.message
+        });
+    }
 };
 
-const getCreditCardID = (data) => {
+const getCreditCardID = async (data) => {
     const hash = hasher(data.cardNumber);
-    return new Promise((resolve, reject) => {
-        redisClient.get(`vault:${hash}`, (error, response) => {
-            if (error) {
-                reject(error);
-                return;
-            }
-            if (!response) {
-                createCreditCardID(data, hash)
-                    .then((id) => resolve(id))
-                    .catch((error) => reject(error));
-            } else {
-                resolve(response.toString());
-            }
-        });
-    });
+    const cachedData = await redisClient.getAsync(`vault:${hash}`);
+    if (!cachedData) {
+        return await createCreditCardID;
+    }
+    return cachedData.toString();
 };
 
-const createTransaction = (data) => (creditCardID) => {
+const createTransaction = async (data, creditCardID) => {
     const paymentData = {
         intent: 'sale',
         payer: {
@@ -74,25 +65,21 @@ const createTransaction = (data) => (creditCardID) => {
             description: 'Payment description'
         }]
     };
-    return new Promise((resolve, reject) => {
-        paypal.payment.create(paymentData, (error, response) => {
-            if (error) {
-                const errorObj = errorConstructor(error.response.message, error.httpStatusCode, {
-                    field: 'general',
-                    reason: error.response.message,
-                    response: error
-                });
-                reject(errorObj);
-                return;
-            }
-            resolve({
-                paymentID: response.id,
-                gateway: 'paypal',
-                cardToken: creditCardID,
-                response
-            });
+    try {
+        const response = await paymentCreate(paymentData);
+        return {
+            paymentID: response.id,
+            gateway: 'paypal',
+            cardToken: creditCardID,
+            response
+        }
+    } catch (error) {
+        throw errorConstructor(error.response.message, error.httpStatusCode, {
+            field: 'general',
+            reason: error.response.message,
+            response: error
         });
-    });
+    }
 };
 
 module.exports = {
@@ -102,7 +89,8 @@ module.exports = {
             data.cardType === 'amex' && data.orderCurrency === 'USD'
         );
     },
-    handler: (data) => {
-        return getCreditCardID(data).then(createTransaction(data));
+    handler: async (data) => {
+        const creditCardID = await getCreditCardID(data);
+        return await createTransaction(data, creditCardID);
     }
 };
