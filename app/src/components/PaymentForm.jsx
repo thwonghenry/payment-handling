@@ -2,7 +2,7 @@ import React, { PureComponent } from 'react';
 import Payment from 'payment';
 import { processResponse } from '../utils/utils';
 import { validateForm, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
-import ReactLoading from 'react-loading';
+import SubmitButton from './SubmitButton.jsx';
 import Modal from 'react-modal';
 
 class PaymentForm extends PureComponent {
@@ -170,21 +170,7 @@ class PaymentForm extends PureComponent {
                 { this.renderFormGroup('cardCvc')}
                 <div className="form-group">
                     <div className="col-xs-12 col-sm-offset-2">
-                        <button className="btn btn-default" disabled={ this.state.submitting ? true : false } >
-                            <span style={{
-                                display: 'inline-block',
-                                verticalAlign: 'middle'
-                            }}>Submit</span>
-                            { 
-                                this.state.submitting && <span style={{
-                                    display: 'inline-block',
-                                    verticalAlign: 'middle',
-                                    marginLeft: 5
-                                }}>
-                                    <ReactLoading height={ 12 } width={ 12 } />
-                                </span>
-                            }
-                        </button>
+                        <SubmitButton loading={ this.state.submitting } />
                         <span style={{
                             color: '#e74c3c',
                             marginLeft: 20
