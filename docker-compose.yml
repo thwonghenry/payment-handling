@@ -6,6 +6,12 @@ services:
     - "8000:8000"
     links:
     - redis
+    volumes:
+    - ./app:/app
+    environment:
+    - PAYPAL_MODE=${PAYPAL_MODE}
+    - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+    - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
   redis:
     image: redis:alpine
     ports:

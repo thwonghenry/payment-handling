@@ -1,9 +1,12 @@
 const paypal = require('paypal-rest-sdk');
-const crypto = require('crypto');
 const redisClient = require('../redisClient');
-const config = require('../../config').paypal;
+const getHashFromData = redisClient.getHashFromData;
 
-paypal.configure(config);
+paypal.configure({
+    mode: process.env.PAYPAL_MODE,
+    client_id: process.env.PAYPAL_CLIENT_ID,
+    client_secret: process.env.PAYPAL_CLIENT_SECRET
+});
 
 const supportCurrencies = [
     'USD',
@@ -11,14 +14,7 @@ const supportCurrencies = [
     'AUD'
 ];
 
-const getKeyByFormData = (data) => {
-    // use array to ensure the order
-    const key = JSON.stringify([data.cardNumber, data.cardHolder]);
-    const hash = crypto.createHash('md5').update(key).digest('hex');
-    return hash;
-};
-
-const createCreditCardID = (data, key) => {
+const createCreditCardID = (data, hash) => {
     return new Promise((resolve, reject) => {
         paypal.creditCard.create({
             number: data.cardNumber.replace(/ /g, ''),
@@ -30,22 +26,24 @@ const createCreditCardID = (data, key) => {
                 reject(error);
                 return;
             }
-            redisClient.set(`vault:${key}`, data.id);
+            redisClient.set(`vault:${hash}`, data.id);
             resolve(data.id);
         });
     });
 };
 
 const getCreditCardID = (data) => {
-    const key = getKeyByFormData(data);
+    const hash = getHashFromData(data.cardNumber);
     return new Promise((resolve, reject) => {
-        redisClient.get(`vault:${key}`, (error, response) => {
+        redisClient.get(`vault:${hash}`, (error, response) => {
             if (error) {
                 reject(error);
                 return;
             }
             if (!response) {
-                createCreditCardID(data, key).then((id) => resolve(id));
+                createCreditCardID(data, hash)
+                    .then((id) => resolve(id))
+                    .catch((error) => reject(error));
                 return;
             }
             return resolve(response.toString());
@@ -92,9 +90,9 @@ module.exports = {
                         reject(error);
                     } else {
                         // save the record
-                        const key = getKeyByFormData(data);
+                        const paymentID = response.id;
                         const appendedData = Object.assign({}, data, {
-                            paymentID: response.id,
+                            paymentID,
                             cardToken: creditCardID
                         });
                         // use token to replace credit card data
@@ -102,6 +100,9 @@ module.exports = {
                         delete appendedData.cardHolder;
                         delete appendedData.cardNumber;
                         delete appendedData.cardType;
+
+                        // use card holder numabe and payment ID as key, so we can get it later by these two fields
+                        const key = getHashFromData([data.cardHolder, paymentID]);
                         redisClient.set(`record:${key}`, JSON.stringify(appendedData));
 
                         resolve({ paymentID: response.id });

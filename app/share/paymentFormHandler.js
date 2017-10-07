@@ -17,7 +17,6 @@ const errorMaker = (field, reason) => ({ field, reason });
 
 module.exports = {
     validateForm: (formData) => {
-        console.log(formData);
         for (let field of requiredFields) {
             const value = formData[field];
             if (!value) {

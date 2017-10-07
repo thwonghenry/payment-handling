@@ -8,8 +8,17 @@ Copy `config.sample.json` to `config.json`, and fill in the keys inside `config.
 
 ## Development environment setup
 
-Make sure you have docker installed, then:
+1. Make sure you have docker, node and npm/yarn installed
 
+2. Install the packages
+```
+cd app
+yarn install / npm install
+```
+
+3. Copy the contents of `.env.example` to `.env`, fill in the constants.
+
+4. Starting the server
 ```
 docker-compose up -d
 ```

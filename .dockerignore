@@ -4,3 +4,4 @@ app/.cache
 app/public/bundle.js
 app/config.json
 *.log
+yarn-error.log

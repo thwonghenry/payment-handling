@@ -8,6 +8,7 @@ WORKDIR app
 ENV HOME="/app"
 
 COPY ./app .
+COPY ./.env .
 
 # Install dev dependency for building
 RUN yarn install
@@ -18,6 +19,7 @@ RUN yarn run build
 
 # Clean up the files
 RUN rm -rf src/
+RUN rm -rf ./.env
 
 # Install only production packages
 RUN rm -rf node_modules/
