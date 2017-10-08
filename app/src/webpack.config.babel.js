@@ -33,6 +33,10 @@ const config = {
             title: 'Payment Service',
             filename: path.resolve(rootDir, 'public', './index.html'),
             template: path.resolve(rootDir, 'src', './index.ejs'),
+            minify: env === 'production' ? {
+                removeComments: true,
+                collapseWhitespace: true
+            } : false
         })
     ]
 };
