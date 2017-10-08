@@ -94,4 +94,4 @@ The record data structure:
 
 ## Misc issues
 
-- For Paypal sandbox environment, only few testing card can pass the validation. Please use the testing card provided in Personal account. Otherwise Paypal will most likely return 500 - 503 response error when doing transactions.
+- For Paypal sandbox environment in production environment, only few testing card can pass the validation. Please use the testing card provided in Personal account. Otherwise Paypal will most likely return 500 - 503 response error when doing transactions.
