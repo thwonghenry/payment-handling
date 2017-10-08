@@ -16,6 +16,7 @@ services:
     - BRAINTREE_PUBLIC_KEY=${BRAINTREE_PUBLIC_KEY}
     - BRAINTREE_PRIVATE_KEY=${BRAINTREE_PRIVATE_KEY}
     - NODE_ENV=development
+    - SECRET=${SECRET}
     command: >
       sh -c 'yarn install && yarn run start'
   redis:

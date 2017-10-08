@@ -1,7 +1,7 @@
 const gateways = require('../gateways');
 const errorConstructor = require('../errorConstructor');
 const redisClient = require('../redisClient');
-const hasher = require('../hasher');
+const { hash, encrypt } = require('../crypto');
 
 module.exports = async (req, res) => {
     const data = req.body;
@@ -25,8 +25,8 @@ module.exports = async (req, res) => {
         delete appendedData.cardType;
 
         // use card holder number and payment ID as key, so we can get it later by these two fields
-        const key = hasher([data.orderCustomer, meta.paymentID]);
-        redisClient.set(`record:${key}`, JSON.stringify(appendedData));
+        const key = hash([data.orderCustomer, meta.paymentID]);
+        redisClient.set(`record:${key}`, encrypt(JSON.stringify(appendedData)));
     
         res.send({ paymentID: meta.paymentID });
     } catch (error) {

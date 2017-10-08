@@ -1,14 +1,14 @@
 const redisClient = require('../redisClient');
-const hasher = require('../hasher');
+const { hash, decrypt } = require('../crypto');
 
 const errorConstructor = require('../errorConstructor');
 
-const getRecordByCustomerNameAndPaymentID = async (cardHolder, paymentID) => {
+const getRecordByCustomerNameAndPaymentID = async (orderCustomer, paymentID) => {
     try {
-        const key = hasher([cardHolder, paymentID]);
+        const key = hash([orderCustomer, paymentID]);
         const cachedData = await redisClient.getAsync(`record:${key}`);
         if (cachedData) {
-            return JSON.parse(cachedData.toString());
+            return JSON.parse(decrypt(cachedData));
         }
         return false;
     } catch (error) {

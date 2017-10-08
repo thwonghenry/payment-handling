@@ -69,6 +69,7 @@ module.exports = {
             });
         } catch (error) {
             // format the error
+            console.error(JSON.stringify(error, null, '\t'));
             throw errorConstructor(error.message, 400, {
                 field: 'general',
                 reason: error.message,

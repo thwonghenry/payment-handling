@@ -62,6 +62,7 @@ module.exports = {
                 response
             };
         } catch (error) {
+            console.error(JSON.stringify(error, null, '\t'));
             throw errorConstructor(error.response.message, error.httpStatusCode, {
                 field: 'general',
                 reason: error.response.message,
