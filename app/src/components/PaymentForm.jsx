@@ -66,6 +66,7 @@ class PaymentForm extends PureComponent {
         for (let field in this.inputRefs) {
             this.inputRefs[field].value = '';
         }
+        this.inputRefs.orderCurrency.value = 'HKD';
     }
 
     closeModal = () => {
