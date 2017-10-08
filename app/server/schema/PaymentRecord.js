@@ -1,6 +1,16 @@
 const client = require('../redisClient');
 const { hash, decrypt, encrypt } = require('../crypto');
 
+const validDataFields = [
+    'gateway',
+    'response',
+    'orderPhone',
+    'orderPrice',
+    'orderCurrency',
+    'orderCustomer',
+    'paymentID'
+];
+
 class PaymentRecord {
     constructor(orderCustomer, paymentID) {
         this.orderCustomer = orderCustomer;
@@ -11,7 +21,11 @@ class PaymentRecord {
     }
 
     set(field, value) {
-        this.data[field] = value;
+        if (validDataFields.includes(field)) {
+            this.data[field] = value;
+        } else {
+            throw new Error(`The schema does not contain field ${field}`);
+        }
     }
 
     getData() {
