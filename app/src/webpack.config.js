@@ -1,7 +1,7 @@
-import path from 'path';
-import MinifyPlugin from 'babel-minify-webpack-plugin';
-import webpack from 'webpack';
-import HtmlWebpackPlugin from 'html-webpack-plugin';
+const path = require('path');
+const MinifyPlugin = require('babel-minify-webpack-plugin');
+const webpack = require('webpack');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 const rootDir = path.resolve(__dirname, '../');
 
@@ -55,4 +55,4 @@ if (env === 'development') {
     ];
 }
 
-export default config;
+module.exports = config;

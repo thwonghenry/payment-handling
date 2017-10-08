@@ -15,6 +15,9 @@ services:
     - BRAINTREE_MERCHANT_ID=${BRAINTREE_MERCHANT_ID}
     - BRAINTREE_PUBLIC_KEY=${BRAINTREE_PUBLIC_KEY}
     - BRAINTREE_PRIVATE_KEY=${BRAINTREE_PRIVATE_KEY}
+    - NODE_ENV=development
+    command: >
+      sh -c 'yarn install && yarn run start'
   redis:
     image: redis:alpine
     ports:

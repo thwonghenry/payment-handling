@@ -21,17 +21,17 @@ For Braintree, besides create an account, you need to prepare multiple merchant 
 
 ## Development environment setup
 
-1. Make sure you have docker, node and npm/yarn installed
+For development environment, we build the bundle in host, and run it in the docker container.
 
-2. Install the packages
-    ```
-    cd app
-    yarn install / npm install
-    ```
+So we don't need to rebuild the container when we change the client code.
 
-3. Copy the contents of `.env.example` to `.env`, fill in the constants.
+Still need to rebuild the container if server code is changed.
 
-4. Starting the server
+1. Make sure you have `docker` installed
+
+2. Copy the contents of `.env.example` to `.env`, fill in the constants.
+
+3. Start the server
     ```
     docker-compose up -d
     ```

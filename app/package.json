@@ -3,8 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node index",
-    "build": "NODE_ENV=production BABEL_ENV=production webpack --config src/webpack.config.babel.js",
-    "dev": "NODE_ENV=development webpack --config src/webpack.config.babel.js --watch"
+    "build": "NODE_ENV=production BABEL_ENV=production webpack --config src/webpack.config.js"
   },
   "dependencies": {
     "braintree": "^2.3.0",
@@ -38,6 +37,8 @@
     "react-loading": "^0.1.4",
     "react-modal": "^3.0.0",
     "webpack": "^3.6.0",
+    "webpack-dev-middleware": "^1.12.0",
+    "webpack-hot-middleware": "^2.19.1",
     "whatwg-fetch": "^2.0.3"
   }
 }
