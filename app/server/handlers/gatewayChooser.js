@@ -18,12 +18,12 @@ module.exports = async (req, res) => {
     try {
         const meta = await gateway(data, req);
         const appendedData = Object.assign({}, data, meta);
-        // use token to replace credit card data
+        // don't save credit card info for safety
         delete appendedData.cardExpiry;
         delete appendedData.cardHolder;
         delete appendedData.cardNumber;
         delete appendedData.cardType;
-    
+
         // use card holder number and payment ID as key, so we can get it later by these two fields
         const key = hasher([data.orderCustomer, meta.paymentID]);
         redisClient.set(`record:${key}`, JSON.stringify(appendedData));
