@@ -34,6 +34,10 @@ const createTransaction = async (data) => {
             expirationMonth: data.cardExpiry.month,
             expirationYear: data.cardExpiry.year,
             number: data.cardNumber,
+        },
+        options: {
+            // submit for settlement immediately after authorized
+            submitForSettlement: true
         }
     });
 
