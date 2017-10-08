@@ -1,6 +1,7 @@
 import path from 'path';
 import MinifyPlugin from 'babel-minify-webpack-plugin';
 import webpack from 'webpack';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
 
 const rootDir = path.resolve(__dirname, '../');
 
@@ -27,6 +28,13 @@ const config = {
             ]
         }]
     },
+    plugins: [
+        new HtmlWebpackPlugin({
+            title: 'Payment Service',
+            filename: path.resolve(rootDir, 'public', './index.html'),
+            template: path.resolve(rootDir, 'src', './index.ejs'),
+        })
+    ]
 };
 
 if (env === 'development') {

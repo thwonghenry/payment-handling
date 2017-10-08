@@ -6,4 +6,5 @@ node_modules
 .env
 yarn-error.log
 app/public/bundle.js
+app/public/index.html
 app/config.json
