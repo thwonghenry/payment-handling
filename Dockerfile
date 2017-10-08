@@ -24,7 +24,7 @@ RUN yarn install
 RUN adduser -D normal_user
 USER normal_user
 
-# Expose port for development server, ignored by Heroku
+# Expose port for the node server, ignored by Heroku
 EXPOSE 8000
 
 CMD ["yarn", "run", "start"]

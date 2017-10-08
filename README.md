@@ -1,5 +1,9 @@
 # Payment Handling Web App
 
+## Demo
+
+https://quiet-everglades-93004.herokuapp.com/
+
 ## Accounts setup
 
 Make sure you have Paypal and Braintree account
@@ -21,12 +25,6 @@ For Braintree, besides create an account, you need to prepare multiple merchant 
 
 ## Development environment setup
 
-For development environment, we build the bundle in host, and run it in the docker container.
-
-So we don't need to rebuild the container when we change the client code.
-
-Still need to rebuild the container if server code is changed.
-
 1. Make sure you have `docker` installed
 
 2. Copy the contents of `.env.example` to `.env`, fill in the constants.
@@ -36,7 +34,16 @@ Still need to rebuild the container if server code is changed.
     docker-compose up -d
     ```
 
-Now it should be up at port 8000
+Now it should be up at `localhost:${PORT}` (Default `PORT` is `8000`)
+
+Changing client side source code will rebuild automatically, refresh browser to take effect.
+
+Changing server side source code need to restart to take effect:
+
+```
+docker-compose down
+docker-compsoe up -d
+```
 
 ## Deployment
 
@@ -53,6 +60,37 @@ heroku open
 ``` 
 
 Set the enviornments variable defined in `.env.sample` in Heroku Dashboard
+
+## Data structure
+
+The payment data from payment form is in structure:
+```
+{
+    orderCustomer: 'Hin' // The customer name
+    orderPhone: '123456789' // The customer phone number
+    orderPrice: 323.3 // The order price
+    orderCurrency: 'USD' // (HKD, USD, AUD, EUR, JPY, CNY)
+
+    cardHolder: 'Hin' // The credit card holder full name
+    cardNumber: '4242 4242 4242 4242' // The credit card number
+    cardExpiry: '03/33' // The expiry date
+    cardCvc: '333' // The card CVC code
+}
+```
+
+After successful payment, the record is stored in Redis with key composed with `orderCustomer` and `paymentID`.
+The record data structure: 
+```
+{
+    orderCustomer: 'Hin' // The customer name
+    orderPhone: '123456789' // The customer phone number
+    orderPrice: 323.3 // The order price
+    orderCurrency: 'USD' // (HKD, USD, AUD, EUR, JPY, CNY)
+    paymentID: 'PAY-123456789' // The payment ID from the 3rd party gateway
+    gateway: 'paypal' // The 3rd party gateway name
+    response: {...} // The full response object from 3rd party API
+}
+```
 
 ## Misc issues
 
