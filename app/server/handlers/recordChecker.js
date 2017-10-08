@@ -1,17 +1,38 @@
 const redisClient = require('../redisClient');
-const { hash, decrypt } = require('../crypto');
+const PaymentRecord = require('../schema/PaymentRecord');
+const { encrypt, decrypt } = require('../crypto');
 
 const errorConstructor = require('../errorConstructor');
 
+/**
+ * Get the record by customer name and payment id
+ * 
+ * First try to get from cache, then try to get from database
+ * 
+ * If the data is missing "orderPhone" field, that means the record is not exists and return false
+ */
 const getRecordByCustomerNameAndPaymentID = async (orderCustomer, paymentID) => {
     try {
-        const key = hash([orderCustomer, paymentID]);
-        const cachedData = await redisClient.getAsync(`record:${key}`);
+        const record = new PaymentRecord(orderCustomer, paymentID);
+        const key = record.getKey();
+        let cachedData = await redisClient.getAsync(`cache:record:${key}`);
         if (cachedData) {
-            return JSON.parse(decrypt(cachedData));
+            cachedData = JSON.parse(decrypt(cachedData));
+            if (cachedData.orderPhone) {
+                return cachedData;
+            }
+            return false;
+        } else {
+            await record.load();
+            const data = record.getData();
+            redisClient.set(`cache:record:${key}`, encrypt(JSON.stringify(data)));
+            if (data.orderPhone) {
+                return data;
+            }
+            return false;
         }
-        return false;
     } catch (error) {
+        console.log(JSON.stringify(error));
         return false;
     }
 };
