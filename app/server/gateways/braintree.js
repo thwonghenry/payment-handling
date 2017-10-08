@@ -1,4 +1,5 @@
 const braintree = require('braintree');
+const _ = require('lodash');
 const errorConstructor = require('../errorConstructor');
 const promisify = require('../promisify');
 const redisClient = require('../redisClient');
@@ -115,18 +116,24 @@ module.exports = {
      * @return {object} The "record" data structure
      */
     handler: async (data) => {
-        const hashedCard = hasher([
+        const customerID = hasher([
+            data.orderCustomer,
             data.cardNumber,
             data.cardExpiry.month,
             data.cardExpiry.year,
             data.cardCvc
         ]);
-        const customerID = hasher([data.cardHolder, hashedCard]);
-
         try {
             let cachedData = await getCachedData(customerID);
             if (!cachedData.created) {
-                await createCustomer(customerID);
+                try {
+                    await createCustomer(customerID);
+                } catch (error) {
+                    // the customer id is created, continue
+                    if (!_.get(error, 'errors.errorCollections.customer.validationErrors.id[0].code') === 91609) {
+                        throw error;
+                    }
+                }
                 cachedData.created = true;
                 redisClient.set(customerID, JSON.stringify(cachedData));
             }
