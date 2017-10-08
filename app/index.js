@@ -3,28 +3,24 @@ const router = require('./server/router');
 
 const server = express();
 
+const promisify = require('./server/promisify');
+
 const isDevEnv = process.env.NODE_ENV === 'development';
 
-if (isDevEnv) {
-    const webpack = require('webpack');
-    const webpackMiddleware = require('webpack-dev-middleware');
-    const config = require('./src/webpack.config.js');
-    const compiler = webpack(config);
+(async () => {
+    if (isDevEnv) {
+        const devMiddleware = require('./server/devMiddleware');
+        await new Promise((resolve) => {
+            devMiddleware.waitUntilValid(resolve);
+        });
+        server.use(devMiddleware);
+    }
 
-    server.use(webpackMiddleware(compiler, {
-        stats: {
-            colors: true
-        },
-        watchOptions: {
-            aggregateTimeout: 300,
-            poll: 1000
-        }
-    }));
-}
+    server.use(express.static('public'));
+    server.use(express.json());
+    server.use(router);
 
-server.use(express.static('public'));
-server.use(express.json());
-server.use(router);
-
-const port = process.env.PORT || 8000;
-server.listen(port, () => console.log(`${server.name} is up!`));
+    const port = process.env.PORT || 8000;
+    await promisify(server, 'listen')(port);
+    console.log(`${server.name} is up!`);
+})();
