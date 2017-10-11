@@ -55,6 +55,8 @@ Also entered the credit card to gain access to Heroku Redis add-on
 
 ```
 heroku login
+heroku container:login
+heroku create
 heroku container:push web
 heroku open
 ``` 

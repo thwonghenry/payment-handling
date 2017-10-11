@@ -4,8 +4,13 @@ services:
     build: .
     ports:
     - "${PORT}:8000"
+    restart: always
     links:
     - redis
+    - postgres
+    depends_on:
+    - redis
+    - postgres
     volumes:
     - ./app:/app
     environment:
@@ -17,9 +22,26 @@ services:
     - BRAINTREE_PRIVATE_KEY=${BRAINTREE_PRIVATE_KEY}
     - NODE_ENV=development
     - SECRET=${SECRET}
+    - DATABASE_URL=postgres://postgres:${POSTGRES_PASSWORD}@postgres:5432
+    - POSTGRES_DB=${POSTGRES_DB}
     command: >
-      sh -c 'yarn install && yarn run start'
+      /bin/sh -c "
+        while ! nc -z postgres 5432;
+        do
+          echo sleeping;
+          sleep 1;
+        done;
+        echo Connected!;
+        yarn install;
+        yarn run start;
+      "
   redis:
     image: redis:alpine
     ports:
     - "6379:6379"
+  postgres:
+    image: kiasaki/alpine-postgres:9.4
+    environment:
+    - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    - POSTGRES_DB=${POSTGRES_DB}
+    restart: always

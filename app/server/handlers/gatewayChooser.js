@@ -23,7 +23,7 @@ module.exports = async (req, res) => {
         record.set('orderPrice', data.orderPrice);
         record.set('orderCurrency', data.orderCurrency);
         record.save();
-    
+
         res.send({ paymentID: meta.paymentID });
     } catch (error) {
         res.status(error.statusCode || 400).send(error);

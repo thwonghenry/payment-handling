@@ -1,6 +1,4 @@
-const redisClient = require('../redisClient');
 const PaymentRecord = require('../schema/PaymentRecord');
-const { encrypt, decrypt } = require('../crypto');
 
 const errorConstructor = require('../errorConstructor');
 
@@ -14,23 +12,7 @@ const errorConstructor = require('../errorConstructor');
 const getRecordByCustomerNameAndPaymentID = async (orderCustomer, paymentID) => {
     try {
         const record = new PaymentRecord(orderCustomer, paymentID);
-        const key = record.getKey();
-        let cachedData = await redisClient.getAsync(`cache:record:${key}`);
-        if (cachedData) {
-            cachedData = JSON.parse(decrypt(cachedData));
-            if (cachedData.orderPhone) {
-                return cachedData;
-            }
-            return false;
-        } else {
-            await record.load();
-            const data = record.getData();
-            redisClient.set(`cache:record:${key}`, encrypt(JSON.stringify(data)));
-            if (data.orderPhone) {
-                return data;
-            }
-            return false;
-        }
+        return await record.load();
     } catch (error) {
         console.log(JSON.stringify(error));
         return false;

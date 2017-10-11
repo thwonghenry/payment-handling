@@ -19,6 +19,8 @@ const errorMaker = (field, reason) => ({ field, reason });
 
 module.exports = {
     validateForm: (formData) => {
+        formData.cardType = Payment.fns.cardType(formData.cardNumber);
+
         for (let field of requiredFields) {
             const value = formData[field];
             if (!value) {
@@ -42,6 +44,11 @@ module.exports = {
                 break;
             }
         }
+
+        if (formData.cardType === 'amex' && formData.orderCurrency !== 'USD') {
+            return errorMaker('genera', 'AMEX credit card can only use USD for currency');
+        }
+
         return true;
     },
     errorMessageBuilder: (error) => `${fieldToName[error.field]} ${error.reason}`,
