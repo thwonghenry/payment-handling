@@ -15,7 +15,7 @@ module.exports = async (req, res) => {
         return;
     }
     try {
-        const meta = await gateway(data, req);
+        const meta = await gateway.handler(data, req);
         const record = new PaymentRecord(data.orderCustomer, meta.paymentID);
         record.set('gateway', meta.gateway);
         record.set('response', meta.response);

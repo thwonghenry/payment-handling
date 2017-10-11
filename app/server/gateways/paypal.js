@@ -14,30 +14,35 @@ const supportCurrencies = [
     'AUD'
 ];
 
-const createTransaction = async (data) => {
-    const paymentData = {
-        intent: 'sale',
-        payer: {
-            payment_method: 'credit_card',
-            funding_instruments: [{
-                credit_card: {
-                    number: data.cardNumber.replace(/ /g, ''),
-                    type: data.cardType,
-                    expire_month: data.cardExpiry.month,
-                    expire_year: data.cardExpiry.year
-                }
-            }]
-        },
-        transactions: [{
-            amount: {
-                total: data.orderPrice,
-                currency: data.orderCurrency
-            },
-            description: 'Payment description'
+const paymentFormToRequestData = (data) => ({
+    intent: 'sale',
+    payer: {
+        payment_method: 'credit_card',
+        funding_instruments: [{
+            credit_card: {
+                number: data.cardNumber.replace(/ /g, ''),
+                type: data.cardType,
+                expire_month: data.cardExpiry.month,
+                expire_year: data.cardExpiry.year
+            }
         }]
-    };
-    return await promisify(paypal.payment, 'create')(paymentData);
-};
+    },
+    transactions: [{
+        amount: {
+            total: data.orderPrice,
+            currency: data.orderCurrency
+        },
+        description: 'Payment description'
+    }]
+});
+
+const responseToRecordData = (response) => ({
+    paymentID: response.id,
+    gateway: 'paypal',
+    response
+});
+
+const createTransaction = (data) => promisify(paypal.payment, 'create')(paymentFormToRequestData(data));
 
 module.exports = {
     predicate: (data) => {
@@ -46,6 +51,8 @@ module.exports = {
             data.cardType === 'amex' && data.orderCurrency === 'USD'
         );
     },
+    paymentFormToRequestData,
+    responseToRecordData,
     /**
      * Pay with Paypal gateway with credit card
      * 
@@ -56,11 +63,7 @@ module.exports = {
     handler: async (data) => {
         try {
             const response = await createTransaction(data);
-            return {
-                paymentID: response.id,
-                gateway: 'paypal',
-                response
-            };
+            return responseToRecordData(response);
         } catch (error) {
             console.error(JSON.stringify(error, null, '\t'));
             throw errorConstructor(error.response.message, error.httpStatusCode, {
@@ -69,5 +72,6 @@ module.exports = {
                 response: error
             });
         }
-    }
+    },
+    name: 'paypal'
 };

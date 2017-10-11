@@ -144,7 +144,7 @@ class PaymentForm extends PureComponent {
                 <div className={ `form-group ${ this.state.orderCurrencyError ? 'has-error' : ''}` }>
                     <label className="control-label col-xs-12 col-sm-2" htmlFor="orderPrice">Price:</label>
                     <div className="col-xs-8 col-sm-8">
-                        <input className="form-control" type="number" name="orderPrice" id="orderPrice" placeholder="Price" ref={ this.getRef } required onChange={ this.onChange } />
+                        <input className="form-control" type="number" name="orderPrice" id="orderPrice" step="0.01" placeholder="Price" ref={ this.getRef } required onChange={ this.onChange } />
                     </div>
                     <div className="col-xs-4 col-sm-2">
                         <select className="form-control" name="orderCurrency" id="orderCurrency" required ref={ this.getRef } onChange={ this.onChange }>

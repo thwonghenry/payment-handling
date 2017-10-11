@@ -15,6 +15,28 @@ const notSupportedCurrencies = [
     'AUD'
 ];
 
+const paymentFormToRequestData = (data) => ({
+    amount: data.orderPrice,
+    merchantAccountId: data.orderCurrency,
+    creditCard: {
+        cardholderName: data.cardHolder,
+        cvv: data.cardCvc,
+        expirationMonth: data.cardExpiry.month,
+        expirationYear: data.cardExpiry.year,
+        number: data.cardNumber,
+    },
+    options: {
+        // submit for settlement immediately after authorized
+        submitForSettlement: true
+    }
+});
+
+const responseToRecordData = (response) => ({
+    paymentID: response.transaction.id,
+    gateway: 'braintree',
+    response
+});
+
 /**
  * Create transaction with credit card token
  * 
@@ -25,21 +47,7 @@ const notSupportedCurrencies = [
  * @return {Object} The response object
  */
 const createTransaction = async (data) => {
-    const response = await promisify(gateway.transaction, 'sale')({
-        amount: data.orderPrice,
-        merchantAccountId: data.orderCurrency,
-        creditCard: {
-            cardholderName: data.cardHolder,
-            cvv: data.cardCvc,
-            expirationMonth: data.cardExpiry.month,
-            expirationYear: data.cardExpiry.year,
-            number: data.cardNumber,
-        },
-        options: {
-            // submit for settlement immediately after authorized
-            submitForSettlement: true
-        }
-    });
+    const response = await promisify(gateway.transaction, 'sale')(paymentFormToRequestData(data));
 
     // if the response contains message, it is error and need to throw out
     if (response.message) {
@@ -55,6 +63,8 @@ module.exports = {
             data.cardType !== 'amex' && !notSupportedCurrencies.includes(data.orderCurrency)
         );
     },
+    paymentFormToRequestData,
+    responseToRecordData,
     /**
      * Pay with Braintree gateway with credit card data
      * 
@@ -65,12 +75,7 @@ module.exports = {
     handler: async (data) => {
         try {
             const response = await createTransaction(data);
-
-            return ({
-                paymentID: response.transaction.id,
-                gateway: 'braintree',
-                response
-            });
+            return responseToRecordData(response);
         } catch (error) {
             // format the error
             console.error(JSON.stringify(error, null, '\t'));
@@ -80,5 +85,6 @@ module.exports = {
                 response: error
             });
         }
-    }
+    },
+    name: 'braintree'
 };
