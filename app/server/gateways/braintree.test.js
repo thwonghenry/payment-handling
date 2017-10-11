@@ -201,7 +201,7 @@ test('payment formorm to request data mapping is correct', () => {
 
 test('response data to payment record mapping is correct', () => {
     expect(responseToRecordData(mockResponse)).toEqual({
-        paymentID: 'n8yxfkzm',
+        paymentId: 'n8yxfkzm',
         gateway: 'braintree',
         response: mockResponse
     });

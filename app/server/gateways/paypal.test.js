@@ -108,7 +108,7 @@ test('payment formorm to request data mapping is correct', () => {
 
 test('response data to payment record mapping is correct', () => {
     expect(responseToRecordData(mockResponse)).toEqual({
-        paymentID: 'PAY-2MP15959W3386433DLHPDMBQ',
+        paymentId: 'PAY-2MP15959W3386433DLHPDMBQ',
         gateway: 'paypal',
         response: mockResponse
     });

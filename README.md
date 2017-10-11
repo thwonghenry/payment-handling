@@ -80,15 +80,15 @@ The payment data from payment form is in structure:
 }
 ```
 
-After successful payment, the record is stored in Redis with key composed with `orderCustomer` and `paymentID`.
-The record data structure: 
+After successful payment, the record is stored in Postgres
+The record data structure:
 ```
 {
-    orderCustomer: 'Hin' // The customer name
-    orderPhone: '123456789' // The customer phone number
-    orderPrice: 323.3 // The order price
-    orderCurrency: 'USD' // (HKD, USD, AUD, EUR, JPY, CNY)
-    paymentID: 'PAY-123456789' // The payment ID from the 3rd party gateway
+    order_customer: 'Hin' // The customer name
+    order_phone: '123456789' // The customer phone number
+    order_price: 323.3 // The order price
+    order_currency: 'USD' // (HKD, USD, AUD, EUR, JPY, CNY)
+    payment_id: 'PAY-123456789' // The payment ID from the 3rd party gateway
     gateway: 'paypal' // The 3rd party gateway name
     response: {...} // The full response object from 3rd party API
 }

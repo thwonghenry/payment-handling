@@ -12,7 +12,7 @@ class CheckForm extends PureComponent {
             error: {},
             submitting: false,
             openModal: false,
-            paymentID: ''
+            paymentId: ''
         };
     }
 
@@ -40,7 +40,7 @@ class CheckForm extends PureComponent {
         this.setState({ submitting: true });
 
         try {
-            const response = await fetch(`/payments/${data.paymentID}?orderCustomer=${encodeURI(data.orderCustomer)}`);
+            const response = await fetch(`/payments/${data.paymentId}?orderCustomer=${encodeURI(data.orderCustomer)}`);
             const responseData = await processResponse(response);
             this.setState({ record: responseData });
             this.setState({ openModal: true });
@@ -116,7 +116,7 @@ class CheckForm extends PureComponent {
         return (
             <form onSubmit={ this.onSubmit } autoComplete="on" className="form-horizontal">
                 { this.renderFormGroup('orderCustomer')}
-                { this.renderFormGroup('paymentID')}
+                { this.renderFormGroup('paymentId')}
                 <div className="form-group">
                     <div className="col-xs-12 col-sm-offset-2">
                         <SubmitButton loading={ this.state.submitting } />

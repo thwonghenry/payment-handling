@@ -32,7 +32,7 @@ const paymentFormToRequestData = (data) => ({
 });
 
 const responseToRecordData = (response) => ({
-    paymentID: response.transaction.id,
+    paymentId: response.transaction.id,
     gateway: 'braintree',
     response
 });

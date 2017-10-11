@@ -37,7 +37,7 @@ const paymentFormToRequestData = (data) => ({
 });
 
 const responseToRecordData = (response) => ({
-    paymentID: response.id,
+    paymentId: response.id,
     gateway: 'paypal',
     response
 });

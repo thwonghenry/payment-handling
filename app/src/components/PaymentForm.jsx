@@ -13,7 +13,7 @@ class PaymentForm extends PureComponent {
             error: {},
             submitting: false,
             openModal: false,
-            paymentID: ''
+            paymentId: ''
         };
     }
 
@@ -52,7 +52,7 @@ class PaymentForm extends PureComponent {
             });
             const responseData = await processResponse(response);
             this.resetFields();
-            this.setState({ paymentID: responseData.paymentID });
+            this.setState({ paymentId: responseData.paymentId });
             this.setState({ openModal: true });
             this.setState({ submitting: false });
         } catch (error) {
@@ -207,7 +207,7 @@ class PaymentForm extends PureComponent {
                         {
                             !this.state.generalError && (<div className="container">
                                 <h2>Payment success</h2>
-                                <p>The order ID: <strong>{ this.state.paymentID }</strong></p>
+                                <p>The order ID: <strong>{ this.state.paymentId }</strong></p>
                                 <p>Please remember the order ID for future reference</p>
                             </div>)
                         }

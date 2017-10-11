@@ -1,6 +1,7 @@
 const gateways = require('../gateways');
 const errorConstructor = require('../errorConstructor');
 const PaymentRecord = require('../schema/PaymentRecord');
+const redisClient = require('../redisClient');
 
 module.exports = async (req, res) => {
     const data = req.body;
@@ -16,7 +17,7 @@ module.exports = async (req, res) => {
     }
     try {
         const meta = await gateway.handler(data, req);
-        const record = new PaymentRecord(data.orderCustomer, meta.paymentID);
+        const record = new PaymentRecord(data.orderCustomer, meta.paymentId);
         record.set('gateway', meta.gateway);
         record.set('response', meta.response);
         record.set('orderPhone', data.orderPhone);
@@ -24,7 +25,7 @@ module.exports = async (req, res) => {
         record.set('orderCurrency', data.orderCurrency);
         record.save();
 
-        res.send({ paymentID: meta.paymentID });
+        res.send({ paymentId: meta.paymentId });
     } catch (error) {
         res.status(error.statusCode || 400).send(error);
     }
