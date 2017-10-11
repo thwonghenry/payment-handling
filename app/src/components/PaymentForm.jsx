@@ -1,7 +1,7 @@
 import React, { PureComponent } from 'react';
 import Payment from 'payment';
 import { processResponse } from '../utils/utils';
-import { validateForm, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
+import { validateForm, transform, fieldToName, errorMessageBuilder } from '../../share/paymentFormHandler';
 import SubmitButton from './SubmitButton.jsx';
 import Modal from 'react-modal';
 
@@ -22,18 +22,17 @@ class PaymentForm extends PureComponent {
         if (this.state.submitting) {
             return;
         }
-        const data = {};
+        let data = {};
 
         this.clearError();
 
         // extract the data
         for (let field in this.inputRefs) {
             let value = (this.inputRefs[field].value || '').trim();
-            if (field === 'cardExpiry') {
-                value = Payment.fns.cardExpiryVal(value);
-            }
             data[field] = value;
         }
+
+        data = transform(data);
 
         const error = validateForm(data);
         if (error !== true) {

@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "scripts": {
     "start": "node index",
-    "build": "NODE_ENV=production BABEL_ENV=production webpack --config src/webpack.config.js"
+    "build": "NODE_ENV=production BABEL_ENV=production webpack --config src/webpack.config.js",
+    "test": "jest"
   },
   "dependencies": {
     "braintree": "^2.3.0",
@@ -20,11 +21,12 @@
   "devDependencies": {
     "babel-core": "^6.26.0",
     "babel-eslint": "^8.0.1",
+    "babel-jest": "^21.2.0",
     "babel-loader": "^7.1.2",
     "babel-minify-webpack-plugin": "^0.2.0",
     "babel-plugin-add-module-exports": "^0.2.1",
     "babel-polyfill": "^6.26.0",
-    "babel-preset-es2015": "^6.24.1",
+    "babel-preset-latest": "^6.24.1",
     "babel-preset-minify": "^0.2.0",
     "babel-preset-react": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
@@ -34,6 +36,7 @@
     "eslint-plugin-jsx-a11y": "^5.1.1",
     "eslint-plugin-react": "^7.4.0",
     "html-webpack-plugin": "^2.30.1",
+    "jest": "^21.2.1",
     "promise-polyfill": "^6.0.2",
     "react": "^16.0.0",
     "react-dom": "^16.0.0",
@@ -43,5 +46,17 @@
     "webpack-dev-middleware": "^1.12.0",
     "webpack-hot-middleware": "^2.19.1",
     "whatwg-fetch": "^2.0.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.jsx?$": "babel-jest"
+    },
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/.cache/"
+    ],
+    "modulePathIgnorePatterns": [
+      "chalk"
+    ]
   }
 }

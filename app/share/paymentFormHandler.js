@@ -18,9 +18,13 @@ const requiredFields = Object.keys(fieldToName);
 const errorMaker = (field, reason) => ({ field, reason });
 
 module.exports = {
+    transform: (formData) => {
+        return Object.assign({}, formData, {
+            cardExpiry: formData.cardExpiry ? Payment.fns.cardExpiryVal(formData.cardExpiry) : null,
+            cardType: Payment.fns.cardType(formData.cardNumber)
+        });
+    },
     validateForm: (formData) => {
-        formData.cardType = Payment.fns.cardType(formData.cardNumber);
-
         for (let field of requiredFields) {
             const value = formData[field];
             if (!value) {
@@ -46,12 +50,13 @@ module.exports = {
         }
 
         if (formData.cardType === 'amex' && formData.orderCurrency !== 'USD') {
-            return errorMaker('genera', 'AMEX credit card can only use USD for currency');
+            return errorMaker('general', 'AMEX credit card can only use USD for currency');
         }
 
         return true;
     },
     errorMessageBuilder: (error) => `${fieldToName[error.field]} ${error.reason}`,
+    errorMaker,
     fieldToName,
     requiredFields
 };
